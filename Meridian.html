@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meridian — Geopolitical Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f10;
+    --bg-elev: #15171a;
+    --bg-elev-2: #1b1e22;
+    --border: #26292e;
+    --border-strong: #34383e;
+    --fg: #e9eaec;
+    --fg-dim: #a7adb5;
+    --fg-mute: #6b7280;
+    --accent: #d97757;
+    --accent-soft: rgba(217,119,87,0.14);
+    --red: #e85a4f;
+    --green: #6fbf73;
+    --blue: #6aa1e0;
+    --yellow: #d9b65a;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --row-pad-y: 14px;
+  }
+  [data-theme="light"] {
+    --bg: #f7f5f1;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f0ede7;
+    --border: #e3ddd2;
+    --border-strong: #c9c1b2;
+    --fg: #1a1a1a;
+    --fg-dim: #4a4a4a;
+    --fg-mute: #8a8a8a;
+    --accent-soft: rgba(217,119,87,0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  #root { height: 100vh; width: 100vw; }
+  button { font-family: inherit; cursor: pointer; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--fg-mute); }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+
+<script>
+  // Tweaks defaults (persisted)
+  window.__TWEAKS = /*EDITMODE-BEGIN*/{
+    "theme": "dark",
+    "density": "comfortable",
+    "accent": "#d97757",
+    "fontPairing": "inter-fraunces"
+  }/*EDITMODE-END*/;
+</script>
+</body>
+</html>
