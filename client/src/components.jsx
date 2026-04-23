@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Bot,
   ChevronRight,
+  ExternalLink,
   LoaderCircle,
   MessageSquareText,
   Radar,
@@ -63,7 +64,21 @@ export function ArticleList({ articles, error, loading, onSelect, selectedArticl
                   </span>
                   <span>{article.region}</span>
                 </div>
-                <div className="text-xs text-slate-500">{article.published_at_relative}</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-slate-500">{article.published_at_relative}</div>
+                  {article.url && (
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg p-1 text-slate-600 transition hover:text-cyan-300"
+                      onClick={(e) => e.stopPropagation()}
+                      title="Open article"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
 
               <h2 className="mt-4 text-lg font-semibold leading-7 text-slate-100 transition group-hover:text-cyan-100">

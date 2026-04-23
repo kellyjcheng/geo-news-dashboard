@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from datetime import datetime, timezone
@@ -28,7 +29,7 @@ app = FastAPI(title="Geo-News Command Server")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "null"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -303,12 +304,17 @@ async def generate_gemini(
         },
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.post(
-            endpoint,
-            params={"key": GEMINI_API_KEY},
-            json=request_body,
-        )
+    for attempt in range(3):
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                endpoint,
+                params={"key": GEMINI_API_KEY},
+                json=request_body,
+            )
+        if response.status_code == 429 and attempt < 2:
+            await asyncio.sleep(2 ** attempt)
+            continue
+        break
 
     payload = response.json()
     if response.status_code >= 400:

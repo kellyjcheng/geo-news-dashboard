@@ -178,7 +178,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="grid min-h-0 grid-rows-[65%_35%] bg-slate-900/70">
+        <section className="grid min-h-0 grid-rows-[65%_35%] bg-slate-900/70 [zoom:0.9]">
           <SummaryPane article={selectedArticle} loading={summaryLoading} summary={summary} />
           <ChatPanel
             article={selectedArticle}
