@@ -376,12 +376,6 @@ function casualtyColor(n) {
   return `rgb(${r},${g},${b})`;
 }
 
-function formatCasualties(n) {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${Math.round(n / 1000)}k`;
-  return String(n);
-}
-
 function severityBorder(n) {
   if (n >= 100000) return "border-l-rose-500";
   if (n >= 20000) return "border-l-orange-400";
@@ -441,15 +435,6 @@ export function ConflictList({ conflicts, error, loading, onRefresh }) {
                       {c.parties.join(" · ")}
                     </p>
                   </div>
-                  <div
-                    className="shrink-0 rounded-full px-2 py-1 font-mono text-[10px] font-semibold"
-                    style={{
-                      color: casualtyColor(c.casualties_estimate),
-                      backgroundColor: casualtyColor(c.casualties_estimate) + "22",
-                    }}
-                  >
-                    ~{formatCasualties(c.casualties_estimate)}
-                  </div>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-slate-400">{c.description}</p>
               </div>
@@ -506,8 +491,6 @@ export function ConflictMap({ conflicts, loading, onRefresh }) {
               <Tooltip direction="top" offset={[0, -4]}>
                 <span className="text-xs">
                   <strong>{c.name}</strong>
-                  <br />
-                  ~{formatCasualties(c.casualties_estimate)} casualties
                 </span>
               </Tooltip>
             </CircleMarker>

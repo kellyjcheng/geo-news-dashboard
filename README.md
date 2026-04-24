@@ -10,8 +10,8 @@ Built with a **Python FastAPI backend** and a **React + Electron frontend**, sty
 
 - **Live News Feed** — pulls the latest geopolitical headlines from NewsAPI, categorized by region and topic (War, Cyber, Diplomacy, Economy, etc.)
 - **Article Briefings** — one-click AI summaries powered by Google Gemini, formatted as intelligence-style reports with risk level, key findings, and watch items
-- **Active Conflict Tracker** — scrollable list of ongoing global conflicts sorted by severity, with casualty estimates, involved parties, and start year
-- **Interactive Conflict Map** — world map with color-coded dots (green → red by casualty count) using react-leaflet on a CartoDB dark tile layer
+- **Active Conflict Tracker** — scrollable list of ongoing global conflicts sorted by severity, with involved parties and start year
+- **Interactive Conflict Map** — world map with color-coded dots indicating conflict severity using react-leaflet on a CartoDB dark tile layer
 - **Desktop App** — packaged as an Electron app; launchable from a Windows desktop shortcut via a silent VBScript launcher
 
 ---
