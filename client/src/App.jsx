@@ -1,141 +1,54 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Activity, Globe2, Shield } from "lucide-react";
 import TitleBar from "./components/TitleBar";
-import { ArticleList, ChatPanel, SummaryPane } from "./components.jsx";
-import { fetchNews, requestChatReply, requestSummary } from "./data.jsx";
-
-const EMPTY_SUMMARY = {
-  headline: "",
-  synopsis: "",
-  bullet_points: [],
-  risk_level: "Monitoring",
-  implications: [],
-  next_steps: [],
-};
+import { ArticleList, ConflictList, ConflictMap } from "./components.jsx";
+import { fetchConflicts, fetchNews } from "./data.jsx";
 
 export default function App() {
   const [articles, setArticles] = useState([]);
   const [selectedArticleId, setSelectedArticleId] = useState(null);
-  const [summary, setSummary] = useState(EMPTY_SUMMARY);
-  const [chatMessages, setChatMessages] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [chatLoading, setChatLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [newsError, setNewsError] = useState("");
+
+  const [conflicts, setConflicts] = useState([]);
+  const [conflictsLoading, setConflictsLoading] = useState(true);
+  const [conflictsError, setConflictsError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-
     async function loadNews() {
       setNewsLoading(true);
-      setError("");
+      setNewsError("");
       try {
-        const response = await fetchNews();
-        if (cancelled) {
-          return;
-        }
-
-        setArticles(response.articles);
-        setSelectedArticleId((currentId) => currentId ?? response.articles[0]?.id ?? null);
-      } catch (loadError) {
-        console.error("Fetch Error:", loadError);
+        const data = await fetchNews();
         if (!cancelled) {
-          setError(loadError.message || "Failed to load operational news feed.");
+          setArticles(data.articles);
+          setSelectedArticleId((id) => id ?? data.articles[0]?.id ?? null);
         }
+      } catch (err) {
+        if (!cancelled) setNewsError(err.message || "Failed to load news feed.");
       } finally {
-        if (!cancelled) {
-          setNewsLoading(false);
-        }
+        if (!cancelled) setNewsLoading(false);
       }
     }
-
     loadNews();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  const selectedArticle = useMemo(
-    () => articles.find((article) => article.id === selectedArticleId) ?? null,
-    [articles, selectedArticleId],
-  );
-
-  useEffect(() => {
-    if (!selectedArticle) {
-      setSummary(EMPTY_SUMMARY);
-      setChatMessages([]);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function summarizeSelectedArticle() {
-      setSummaryLoading(true);
-      setSummary(EMPTY_SUMMARY);
-      setChatMessages([]);
-      try {
-        const nextSummary = await requestSummary(selectedArticle);
-        if (!cancelled) {
-          setSummary(nextSummary);
-        }
-      } catch (summaryError) {
-        if (!cancelled) {
-          setSummary({
-            headline: selectedArticle.title,
-            synopsis: "Summary generation failed. Backend or Gemini connectivity needs attention.",
-            bullet_points: [summaryError.message || "Unable to generate summary."],
-            risk_level: "Degraded",
-            implications: ["The article payload is loaded, but AI summarization is unavailable."],
-            next_steps: ["Verify `VITE_GEMINI_API_KEY` and backend connectivity."],
-          });
-        }
-      } finally {
-        if (!cancelled) {
-          setSummaryLoading(false);
-        }
-      }
-    }
-
-    summarizeSelectedArticle();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedArticle]);
-
-  async function handleSendMessage(prompt) {
-    if (!selectedArticle || !prompt.trim() || chatLoading) {
-      return;
-    }
-
-    const nextUserMessage = { role: "user", content: prompt.trim() };
-    const pendingMessages = [...chatMessages, nextUserMessage];
-
-    setChatMessages(pendingMessages);
-    setChatLoading(true);
-
+  const loadConflicts = useCallback(async () => {
+    setConflictsLoading(true);
+    setConflictsError("");
     try {
-      const response = await requestChatReply({
-        article: selectedArticle,
-        summary,
-        messages: pendingMessages,
-      });
-
-      setChatMessages([...pendingMessages, { role: "assistant", content: response.reply }]);
-    } catch (chatError) {
-      setChatMessages([
-        ...pendingMessages,
-        {
-          role: "assistant",
-          content: chatError.message || "Chat request failed.",
-          error: true,
-        },
-      ]);
+      const data = await fetchConflicts();
+      setConflicts(data.conflicts);
+    } catch (err) {
+      setConflictsError(err.message || "Failed to load conflict data.");
     } finally {
-      setChatLoading(false);
+      setConflictsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => { loadConflicts(); }, [loadConflicts]);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
@@ -158,18 +71,16 @@ export default function App() {
                   {articles.length || 0} active
                 </div>
               </div>
-
               <div className="mt-5 grid grid-cols-3 gap-3 text-sm text-slate-400">
                 <StatusBadge icon={Globe2} label="Coverage" value="Worldwide" />
                 <StatusBadge icon={Shield} label="Desk" value="Geo-Sec" />
                 <StatusBadge icon={Activity} label="Mode" value="Live Sync" />
               </div>
             </header>
-
             <div className="min-h-0 flex-1">
               <ArticleList
                 articles={articles}
-                error={error}
+                error={newsError}
                 loading={newsLoading}
                 selectedArticleId={selectedArticleId}
                 onSelect={setSelectedArticleId}
@@ -178,15 +89,17 @@ export default function App() {
           </div>
         </section>
 
-        <section className="grid min-h-0 grid-rows-[65%_35%] bg-slate-900/70 [zoom:0.9]">
-          <SummaryPane article={selectedArticle} loading={summaryLoading} summary={summary} />
-          <ChatPanel
-            article={selectedArticle}
-            loading={chatLoading}
-            messages={chatMessages}
-            onSend={handleSendMessage}
-            summaryLoading={summaryLoading}
-            summary={summary}
+        <section className="grid min-h-0 grid-rows-[65%_35%] bg-slate-900/70">
+          <ConflictList
+            conflicts={conflicts}
+            error={conflictsError}
+            loading={conflictsLoading}
+            onRefresh={loadConflicts}
+          />
+          <ConflictMap
+            conflicts={conflicts}
+            loading={conflictsLoading}
+            onRefresh={loadConflicts}
           />
         </section>
       </main>

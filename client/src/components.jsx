@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
 import {
   AlertTriangle,
   Bot,
@@ -7,9 +8,11 @@ import {
   LoaderCircle,
   MessageSquareText,
   Radar,
+  RefreshCw,
   SendHorizontal,
   ShieldAlert,
   Sparkles,
+  Swords,
 } from "lucide-react";
 
 export function ArticleList({ articles, error, loading, onSelect, selectedArticleId }) {
@@ -347,6 +350,169 @@ function ChatBubble({ message }) {
           {isUser ? "Operator" : "Gemini"}
         </div>
         <div className="whitespace-pre-wrap">{message.content}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Conflict helpers ────────────────────────────────────────────────────────
+
+function casualtyColor(n) {
+  const minLog = Math.log10(500);
+  const maxLog = Math.log10(600000);
+  const t = Math.min(1, Math.max(0, (Math.log10(Math.max(1, n)) - minLog) / (maxLog - minLog)));
+  let r, g, b;
+  if (t <= 0.5) {
+    const u = t * 2;
+    r = Math.round(34 + u * (234 - 34));
+    g = Math.round(197 + u * (179 - 197));
+    b = Math.round(94 + u * (8 - 94));
+  } else {
+    const u = (t - 0.5) * 2;
+    r = Math.round(234 + u * (239 - 234));
+    g = Math.round(179 + u * (68 - 179));
+    b = Math.round(8 + u * (68 - 8));
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+function formatCasualties(n) {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${Math.round(n / 1000)}k`;
+  return String(n);
+}
+
+function severityBorder(n) {
+  if (n >= 100000) return "border-l-rose-500";
+  if (n >= 20000) return "border-l-orange-400";
+  if (n >= 5000) return "border-l-yellow-400";
+  return "border-l-cyan-500";
+}
+
+// ─── ConflictList ─────────────────────────────────────────────────────────────
+
+export function ConflictList({ conflicts, error, loading, onRefresh }) {
+  return (
+    <div className="flex min-h-0 flex-col border-b border-cyan-950/60 bg-slate-950 p-4">
+      <header className="mb-3 flex shrink-0 items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Swords className="h-4 w-4 text-cyan-400/80" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.32em] text-cyan-400/80">
+            Active Conflicts
+          </span>
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="rounded-lg border border-slate-700 bg-slate-800/60 p-1.5 text-slate-400 transition hover:border-cyan-500/40 hover:text-cyan-300 disabled:opacity-40"
+          title="Refresh"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </header>
+
+      {error ? (
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-300">
+          {error}
+        </div>
+      ) : loading && conflicts.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center">
+          <LoaderCircle className="h-6 w-6 animate-spin text-cyan-400/60" />
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="space-y-2 pr-1">
+            {conflicts.map((c) => (
+              <div
+                key={c.id}
+                className={`rounded-2xl border border-slate-800 border-l-2 bg-slate-900/70 px-4 py-3 ${severityBorder(c.casualties_estimate)}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-slate-100">
+                        {c.name}
+                      </span>
+                      <span className="shrink-0 rounded-full border border-slate-700 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">
+                        {c.start_year}–
+                      </span>
+                    </div>
+                    <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                      {c.parties.join(" · ")}
+                    </p>
+                  </div>
+                  <div
+                    className="shrink-0 rounded-full px-2 py-1 font-mono text-[10px] font-semibold"
+                    style={{
+                      color: casualtyColor(c.casualties_estimate),
+                      backgroundColor: casualtyColor(c.casualties_estimate) + "22",
+                    }}
+                  >
+                    ~{formatCasualties(c.casualties_estimate)}
+                  </div>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{c.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ConflictMap ──────────────────────────────────────────────────────────────
+
+export function ConflictMap({ conflicts, loading, onRefresh }) {
+  return (
+    <div className="flex min-h-0 flex-col bg-slate-950 p-4">
+      <header className="mb-2 flex shrink-0 items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Radar className="h-4 w-4 text-cyan-400/80" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.32em] text-cyan-400/80">
+            Conflict Map
+          </span>
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="rounded-lg border border-slate-700 bg-slate-800/60 p-1.5 text-slate-400 transition hover:border-cyan-500/40 hover:text-cyan-300 disabled:opacity-40"
+          title="Refresh"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-800">
+        <MapContainer
+          center={[20, 15]}
+          zoom={2}
+          style={{ height: "100%", width: "100%", background: "#020617" }}
+          zoomControl={true}
+          attributionControl={false}
+        >
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          {conflicts.map((c) => (
+            <CircleMarker
+              key={c.id}
+              center={[c.lat, c.lng]}
+              radius={7}
+              pathOptions={{
+                color: "transparent",
+                fillColor: casualtyColor(c.casualties_estimate),
+                fillOpacity: 0.85,
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -4]}>
+                <span className="text-xs">
+                  <strong>{c.name}</strong>
+                  <br />
+                  ~{formatCasualties(c.casualties_estimate)} casualties
+                </span>
+              </Tooltip>
+            </CircleMarker>
+          ))}
+        </MapContainer>
       </div>
     </div>
   );
